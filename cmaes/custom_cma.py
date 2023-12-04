@@ -32,3 +32,6 @@ class CustomCMA(CMA):
         y = cast(np.ndarray, B.dot(np.diag(D))).dot(z)  # ~ N(0, C)
         x = self._mean + self._sigma * y  # ~ N(m, σ^2 C)
         return x
+
+    def anchor(self):
+        return self._mean
