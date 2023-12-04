@@ -1,3 +1,6 @@
+"""
+comes from https://github.com/CyberAgentAILab/cmaes/tree/f44236c5e041cbc23bf45d47bab97a2a72f1d28d
+"""
 from __future__ import annotations
 
 import math
@@ -6,7 +9,6 @@ import numpy as np
 from typing import Any
 from typing import cast
 from typing import Optional
-
 
 _EPS = 1e-8
 _MEAN_MAX = 1e32
@@ -70,15 +72,15 @@ class CMA:
     """
 
     def __init__(
-        self,
-        mean: np.ndarray,
-        sigma: float,
-        bounds: Optional[np.ndarray] = None,
-        n_max_resampling: int = 100,
-        seed: Optional[int] = None,
-        population_size: Optional[int] = None,
-        cov: Optional[np.ndarray] = None,
-        lr_adapt: bool = False,
+            self,
+            mean: np.ndarray,
+            sigma: float,
+            bounds: Optional[np.ndarray] = None,
+            n_max_resampling: int = 100,
+            seed: Optional[int] = None,
+            population_size: Optional[int] = None,
+            cov: Optional[np.ndarray] = None,
+            lr_adapt: bool = False,
     ):
         assert sigma > 0, "sigma must be non-zero positive value"
 
@@ -140,7 +142,7 @@ class CMA:
         c_sigma = (mu_eff + 2) / (n_dim + mu_eff + 5)
         d_sigma = 1 + 2 * max(0, math.sqrt((mu_eff - 1) / (n_dim + 1)) - 1) + c_sigma
         assert (
-            c_sigma < 1
+                c_sigma < 1
         ), "invalid learning rate for cumulation for the step-size control"
 
         # learning rate for cumulation for the rank-one update (eq.56)
@@ -161,7 +163,7 @@ class CMA:
 
         # E||N(0, I)|| (p.28)
         self._chi_n = math.sqrt(self._n_dim) * (
-            1.0 - (1.0 / (4.0 * self._n_dim)) + 1.0 / (21.0 * (self._n_dim**2))
+                1.0 - (1.0 / (4.0 * self._n_dim)) + 1.0 / (21.0 * (self._n_dim ** 2))
         )
 
         self._weights = weights
@@ -273,7 +275,7 @@ class CMA:
         self._C = (self._C + self._C.T) / 2
         D2, B = np.linalg.eigh(self._C)
         D = np.sqrt(np.where(D2 < 0, _EPS, D2))
-        self._C = np.dot(np.dot(B, np.diag(D**2)), B.T)
+        self._C = np.dot(np.dot(B, np.diag(D ** 2)), B.T)
 
         self._B, self._D = B, D
         return B, D
@@ -328,7 +330,7 @@ class CMA:
         if self._lr_adapt:
             old_mean = np.copy(self._mean)
             old_sigma = self._sigma
-            old_Sigma = self._sigma**2 * self._C
+            old_Sigma = self._sigma ** 2 * self._C
             old_invsqrtC = B @ np.diag(1 / D) @ B.T
         else:
             old_mean, old_sigma, old_Sigma, old_invsqrtC = None, None, None, None
@@ -382,15 +384,15 @@ class CMA:
             np.array([w * np.outer(y, y) for w, y in zip(w_io, y_k)]), axis=0
         )
         self._C = (
-            (
-                1
-                + self._c1 * delta_h_sigma
-                - self._c1
-                - self._cmu * np.sum(self._weights)
-            )
-            * self._C
-            + self._c1 * rank_one
-            + self._cmu * rank_mu
+                (
+                        1
+                        + self._c1 * delta_h_sigma
+                        - self._c1
+                        - self._cmu * np.sum(self._weights)
+                )
+                * self._C
+                + self._c1 * rank_one
+                + self._cmu * rank_mu
         )
 
         # Learning rate adaptation: https://arxiv.org/abs/2304.03473
@@ -402,15 +404,15 @@ class CMA:
             self._lr_adaptation(old_mean, old_sigma, old_Sigma, old_invsqrtC)
 
     def _lr_adaptation(
-        self,
-        old_mean: np.ndarray,
-        old_sigma: float,
-        old_Sigma: np.ndarray,
-        old_invsqrtC: np.ndarray,
+            self,
+            old_mean: np.ndarray,
+            old_sigma: float,
+            old_Sigma: np.ndarray,
+            old_invsqrtC: np.ndarray,
     ) -> None:
         # calculate one-step difference of the parameters
         Deltamean = (self._mean - old_mean).reshape([self._n_dim, 1])
-        Sigma = (self._sigma**2) * self._C
+        Sigma = (self._sigma ** 2) * self._C
         # note that we use here matrix representation instead of vec one
         DeltaSigma = Sigma - old_Sigma
 
@@ -418,32 +420,32 @@ class CMA:
         old_inv_sqrtSigma = old_invsqrtC / old_sigma
         locDeltamean = old_inv_sqrtSigma.dot(Deltamean)
         locDeltaSigma = (
-            old_inv_sqrtSigma.dot(DeltaSigma.dot(old_inv_sqrtSigma))
-        ).reshape(self.dim * self.dim, 1) / np.sqrt(2)
+                            old_inv_sqrtSigma.dot(DeltaSigma.dot(old_inv_sqrtSigma))
+                        ).reshape(self.dim * self.dim, 1) / np.sqrt(2)
 
         # moving average E and V
         self._Emean = (
-            1 - self._beta_mean
-        ) * self._Emean + self._beta_mean * locDeltamean
+                              1 - self._beta_mean
+                      ) * self._Emean + self._beta_mean * locDeltamean
         self._ESigma = (
-            1 - self._beta_Sigma
-        ) * self._ESigma + self._beta_Sigma * locDeltaSigma
+                               1 - self._beta_Sigma
+                       ) * self._ESigma + self._beta_Sigma * locDeltaSigma
         self._Vmean = (1 - self._beta_mean) * self._Vmean + self._beta_mean * (
-            float(np.linalg.norm(locDeltamean)) ** 2
+                float(np.linalg.norm(locDeltamean)) ** 2
         )
         self._VSigma = (1 - self._beta_Sigma) * self._VSigma + self._beta_Sigma * (
-            float(np.linalg.norm(locDeltaSigma)) ** 2
+                float(np.linalg.norm(locDeltaSigma)) ** 2
         )
 
         # estimate SNR
         sqnormEmean = np.linalg.norm(self._Emean) ** 2
         hatSNRmean = (
-            sqnormEmean - (self._beta_mean / (2 - self._beta_mean)) * self._Vmean
-        ) / (self._Vmean - sqnormEmean)
+                             sqnormEmean - (self._beta_mean / (2 - self._beta_mean)) * self._Vmean
+                     ) / (self._Vmean - sqnormEmean)
         sqnormESigma = np.linalg.norm(self._ESigma) ** 2
         hatSNRSigma = (
-            sqnormESigma - (self._beta_Sigma / (2 - self._beta_Sigma)) * self._VSigma
-        ) / (self._VSigma - sqnormESigma)
+                              sqnormESigma - (self._beta_Sigma / (2 - self._beta_Sigma)) * self._VSigma
+                      ) / (self._VSigma - sqnormESigma)
 
         # update learning rate
         before_eta_mean = self._eta_mean
@@ -472,7 +474,7 @@ class CMA:
         logeigsum = sum([np.log(e) for e in eigs])
         self._sigma = np.exp(logeigsum / 2.0 / self._n_dim)
         self._sigma = min(self._sigma, _SIGMA_MAX)
-        self._C = Sigma / (self._sigma**2)
+        self._C = Sigma / (self._sigma ** 2)
 
         # step-size correction
         self._sigma *= before_eta_mean / self._eta_mean
@@ -483,16 +485,16 @@ class CMA:
 
         # Stop if the range of function values of the recent generation is below tolfun.
         if (
-            self.generation > self._funhist_term
-            and np.max(self._funhist_values) - np.min(self._funhist_values)
-            < self._tolfun
+                self.generation > self._funhist_term
+                and np.max(self._funhist_values) - np.min(self._funhist_values)
+                < self._tolfun
         ):
             return True
 
         # Stop if the std of the normal distribution is smaller than tolx
         # in all coordinates and pc is smaller than tolx in all components.
         if np.all(self._sigma * dC < self._tolx) and np.all(
-            self._sigma * self._pc < self._tolx
+                self._sigma * self._pc < self._tolx
         ):
             return True
 
@@ -539,7 +541,7 @@ def _compress_symmetric(sym2d: np.ndarray) -> np.ndarray:
     sym1d = np.zeros(dim)
     start = 0
     for i in range(n):
-        sym1d[start : start + n - i] = sym2d[i][i:]  # noqa: E203
+        sym1d[start: start + n - i] = sym2d[i][i:]  # noqa: E203
         start += n - i
     return sym1d
 
