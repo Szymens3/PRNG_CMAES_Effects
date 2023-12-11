@@ -65,6 +65,9 @@ def main():
     # handle optim histories
     print(optim_histories)
 
+    # TO GET SCORE OF HISTORY POINTS:
+    # np.apply_along_axis(eval_function, 1, optim_histories[0][1])
+
 
 if __name__ == "__main__":
     main()
