@@ -3,6 +3,7 @@ from cmaes.custom_cma import CustomCMA
 from prng.lcg_prng import LCG_PRNG
 from prng.mt_prng import MT_PRNG
 from prng.xoroshio_prng import XOROSHIRO_PRNG
+from prng.urandom_prng import URANDOM_PRNG
 def quadratic(x1, x2):
     return (x1 - 3) ** 2 + (10 * (x2 + 2)) ** 2
 
@@ -13,6 +14,7 @@ def qubic(x1, x2, x3):
 lcg_rng = LCG_PRNG(1234)
 mt_rng = MT_PRNG(1234)
 xoroshiro_rng = XOROSHIRO_PRNG(1234)
+urandom_rng = URANDOM_PRNG('prng/urandom.json')
 optimizer = CustomCMA(mean=np.zeros(3), sigma=1.3, rng=xoroshiro_rng)
 
 for generation in range(50):
