@@ -7,7 +7,7 @@ class HALTON_PRNG(PRNG):
         self._prng = qmc.Halton(d=1, seed=seed)
 
     def __str__(self) -> str:
-        return f"halton_prng_{super().__str__()}"
+        return f"halton_{super().__str__()}"
 
     def std_normal(self, dim: int):
         samples = self._prng.random(n=dim)

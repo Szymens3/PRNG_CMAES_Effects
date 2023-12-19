@@ -7,7 +7,7 @@ class SOBOL_PRNG(PRNG):
         self._prng = qmc.Sobol(d=1, seed=seed)
 
     def __str__(self) -> str:
-        return f"sobol_prng_{super().__str__()}"
+        return f"sobol_{super().__str__()}"
 
     def std_normal(self, dim: int):
         samples = self._prng.random(n=dim)
