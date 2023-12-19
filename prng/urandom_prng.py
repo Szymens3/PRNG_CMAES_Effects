@@ -12,6 +12,9 @@ class URANDOM_PRNG(PRNG):
             self._random_numbers = json.load(input_file)
         self._current_index = 0
 
+    def __str__(self) -> str:
+        return f"urandom_{super().__str__()}"
+
     def std_normal(self, dim: int):
         try:
             n = reduce(lambda x, y: x*y, dim)

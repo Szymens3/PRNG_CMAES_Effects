@@ -10,5 +10,8 @@ class LCG_PRNG(PRNG):
         dxsm_mult = 0xff37f1f758180525
         self._prng = Generator(LCG128Mix(multiplier=lcg_mult, dxsm_multiplier=dxsm_mult, output="dxsm", seed=seed))
 
+    def __str__(self) -> str:
+        return f"lcg_{super().__str__()}"
+
     def std_normal(self, dim: int):
         return self._prng.standard_normal(dim)
