@@ -1,6 +1,7 @@
 import opfunu
 import numpy as np
 import os
+import argparse
 
 from prng.lcg_prng import LCG_PRNG
 from prng.mt_prng import MT_PRNG
@@ -15,7 +16,7 @@ def create_directory_if_not_exists(directory):
     if not os.path.exists(directory):
         os.makedirs(directory)
 
-def run_experiment(directory_path, func_i, func,  dim, algorithm_name, rng, N_EXPERIMENTS_PER_FUNC_PER_DIM=51, max_FES_coef = 10000):
+def run_experiment(directory_path, func_i, func, dim, algorithm_name, rng, N_EXPERIMENTS_PER_FUNC_PER_DIM=51, max_FES_coef = 10000):
 
     # if func_i in [5,17,29]:
     #     print("Problematic functions")
@@ -35,9 +36,8 @@ def run_experiment(directory_path, func_i, func,  dim, algorithm_name, rng, N_EX
     experiments_results = np.zeros((len(run_checkpoints), N_EXPERIMENTS_PER_FUNC_PER_DIM))
 
 
-
     for experiment_i in range(N_EXPERIMENTS_PER_FUNC_PER_DIM):
-        
+
         initial_mean_vector = rng.std_normal(dim)
         optimizer = CustomCMA(mean=initial_mean_vector, sigma=1.3, bounds=bounds, rng=rng)
 
@@ -60,7 +60,7 @@ def run_experiment(directory_path, func_i, func,  dim, algorithm_name, rng, N_EX
 
         experiments_results[:, experiment_i] = run_results
     np.savetxt(file_path, experiments_results, fmt='%d', delimiter=' ')
-    print(f"Experiments for: function number {func_i+1}, dimension: {dims} have been completed and saved!")
+    print(f"Experiments for: function number {func_i+1}, dimension: {dim} has been completed and saved!")
 
 if __name__ == "__main__":
 
@@ -98,10 +98,14 @@ if __name__ == "__main__":
     opfunu.cec_based.F282017,
     opfunu.cec_based.F292017,
 ]
-    
-    dims = [10] # TODO add all dims
-    N_EXPERIMENTS_PER_FUNC_PER_DIM = 5 # TODO change to 51
-    max_FES_coef =  10_000
+
+    parser = argparse.ArgumentParser(prog="CMA-ES trainer")
+    parser.add_argument('problem_dim', type=int)
+    args = parser.parse_args()
+
+    dim = args.problem_dim
+    N_EXPERIMENTS_PER_FUNC_PER_DIM = 5  # TODO change to 51
+    max_FES_coef = 10_000
 
     lcg_rng = LCG_PRNG(1234)
     mt_rng = MT_PRNG(1234)
@@ -110,8 +114,8 @@ if __name__ == "__main__":
     sobol_prng = SOBOL_PRNG(1234)
     urandom_rng = URANDOM_PRNG('prng/urandom.json')
 
-    prngs = [lcg_rng, mt_rng, xoroshiro_rng, urandom_rng] # halton_prng, sobol_prng
-    
+    prngs = [lcg_rng, mt_rng, xoroshiro_rng, urandom_rng]  # halton_prng, sobol_prng
+
     result_directory = "results"
     create_directory_if_not_exists(result_directory)
     print(f"Experiments output are in {result_directory} direcotry")
@@ -120,5 +124,4 @@ if __name__ == "__main__":
         directory_path = f"results/{prng}"
         print(f"Running experiments for: {prng} generator")
         for func_i, func in enumerate(all_funcs_2017):
-            for dim in dims:
-                run_experiment(directory_path, func_i, func, dim, algorithm_name, prng, N_EXPERIMENTS_PER_FUNC_PER_DIM, max_FES_coef)
+            run_experiment(directory_path, func_i, func, dim, algorithm_name, prng, N_EXPERIMENTS_PER_FUNC_PER_DIM, max_FES_coef)
