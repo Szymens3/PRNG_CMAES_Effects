@@ -4,3 +4,4 @@ __pycache__
 .ipynb_checkpoints
 fun.ipynb
 .CMA-ES
+results

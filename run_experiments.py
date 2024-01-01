@@ -123,5 +123,23 @@ if __name__ == "__main__":
     for prng in prngs:
         directory_path = f"results/{prng}"
         print(f"Running experiments for: {prng} generator")
+        print(len(all_funcs_2017))
         for func_i, func in enumerate(all_funcs_2017):
-            run_experiment(directory_path, func_i, func, dim, algorithm_name, prng, N_EXPERIMENTS_PER_FUNC_PER_DIM, max_FES_coef)
+            try:
+                run_experiment(directory_path, func_i, func, dim, algorithm_name, prng, N_EXPERIMENTS_PER_FUNC_PER_DIM, max_FES_coef)
+            except SystemExit as e:
+                print(f"Error for function {func_i+1} and dimension {dim}")
+                print(e)
+                continue
+            except AssertionError as e:
+                print(f"Error for function {func_i+1} and dimension {dim}")
+                print(e)
+                continue
+            except FileNotFoundError as e:
+                print(f"Error for function {func_i+1} and dimension {dim}")
+                print(e)
+                continue
+            except Exception as e:
+                print(f"Mysterious error for function {func_i+1} and dimension {dim}")
+                print(e)
+                continue
