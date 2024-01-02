@@ -118,12 +118,11 @@ if __name__ == "__main__":
 
     result_directory = "results"
     create_directory_if_not_exists(result_directory)
-    print(f"Experiments output are in {result_directory} direcotry")
+    print(f"Experiments output are in {result_directory} directory")
 
     for prng in prngs:
         directory_path = f"results/{prng}"
         print(f"Running experiments for: {prng} generator")
-        print(len(all_funcs_2017))
         for func_i, func in enumerate(all_funcs_2017):
             try:
                 run_experiment(directory_path, func_i, func, dim, algorithm_name, prng, N_EXPERIMENTS_PER_FUNC_PER_DIM, max_FES_coef)
