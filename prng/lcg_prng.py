@@ -5,6 +5,7 @@ from .prng import PRNG
 
 
 class LCG_PRNG(PRNG):
+    name='lcg'
     def __init__(self, seed):
         lcg_mult = 0x1DA942042E4DD58B5
         dxsm_mult = 0xff37f1f758180525

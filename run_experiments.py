@@ -9,6 +9,7 @@ from prng.xoroshio_prng import XOROSHIRO_PRNG
 from prng.urandom_prng import URANDOM_PRNG
 from prng.halton_prng import HALTON_PRNG
 from prng.sobol_prng import SOBOL_PRNG
+from prng.file_generator import seeds
 from cmaes.custom_cma import CustomCMA
 
 
@@ -16,15 +17,11 @@ def create_directory_if_not_exists(directory):
     if not os.path.exists(directory):
         os.makedirs(directory)
 
-def run_experiment(directory_path, func_i, func, dim, algorithm_name, rng, N_EXPERIMENTS_PER_FUNC_PER_DIM=51, max_FES_coef = 10000):
-
+def run_experiment(directory_path, func_i, func, dim, algorithm_name, rng, N_EXPERIMENTS_PER_FUNC_PER_DIM=51, max_FES_coef = 10_000):
     # if func_i in [5,17,29]:
     #     print("Problematic functions")
-
     max_FES = max_FES_coef * dim
     bounds = np.array([[-100, 100]] * dim)
-
-    create_directory_if_not_exists(directory_path)
 
     file_path = f"{directory_path}/{algorithm_name}_{func_i+1}_{dim}"
     problem = func(ndim=dim)
@@ -37,9 +34,9 @@ def run_experiment(directory_path, func_i, func, dim, algorithm_name, rng, N_EXP
 
 
     for experiment_i in range(N_EXPERIMENTS_PER_FUNC_PER_DIM):
-
-        initial_mean_vector = rng.std_normal(dim)
-        optimizer = CustomCMA(mean=initial_mean_vector, sigma=1.3, bounds=bounds, rng=rng)
+        rng_instance = rng(seeds[experiment_i])
+        initial_mean_vector = rng_instance.std_normal(dim)
+        optimizer = CustomCMA(mean=initial_mean_vector, sigma=1.3, bounds=bounds, rng=rng_instance)
 
         run_results = np.zeros(len(run_checkpoints))
         checkpoint_pointer = 0
@@ -60,7 +57,7 @@ def run_experiment(directory_path, func_i, func, dim, algorithm_name, rng, N_EXP
 
         experiments_results[:, experiment_i] = run_results
     np.savetxt(file_path, experiments_results, fmt='%d', delimiter=' ')
-    print(f"Experiments for: function number {func_i+1}, dimension: {dim} has been completed and saved!")
+    return f"Experiments for: function number {func_i+1}, dimension: {dim} has been completed and saved!"
 
 if __name__ == "__main__":
 
@@ -104,28 +101,22 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     dim = args.problem_dim
-    N_EXPERIMENTS_PER_FUNC_PER_DIM = 5  # TODO change to 51
+    N_EXPERIMENTS_PER_FUNC_PER_DIM = 51
     max_FES_coef = 10_000
 
-    lcg_rng = LCG_PRNG(1234)
-    mt_rng = MT_PRNG(1234)
-    xoroshiro_rng = XOROSHIRO_PRNG(1234)
-    halton_prng = HALTON_PRNG(1234)
-    sobol_prng = SOBOL_PRNG(1234)
-    urandom_rng = URANDOM_PRNG('prng/urandom.json')
-
-    prngs = [lcg_rng, mt_rng, xoroshiro_rng, urandom_rng]  # halton_prng, sobol_prng
+    prngs = [SOBOL_PRNG,HALTON_PRNG,URANDOM_PRNG, LCG_PRNG, MT_PRNG, XOROSHIRO_PRNG]
 
     result_directory = "results"
     create_directory_if_not_exists(result_directory)
     print(f"Experiments output are in {result_directory} directory")
 
     for prng in prngs:
-        directory_path = f"results/{prng}"
-        print(f"Running experiments for: {prng} generator")
+        directory_path = f"results/{prng.name}"
+        create_directory_if_not_exists(directory_path)
+        print(f"Running experiments for: {prng.name} generator")
         for func_i, func in enumerate(all_funcs_2017):
             try:
-                run_experiment(directory_path, func_i, func, dim, algorithm_name, prng, N_EXPERIMENTS_PER_FUNC_PER_DIM, max_FES_coef)
+                print(run_experiment(directory_path, func_i, func, dim, algorithm_name, prng, N_EXPERIMENTS_PER_FUNC_PER_DIM, max_FES_coef))
             except SystemExit as e:
                 print(f"Error for function {func_i+1} and dimension {dim}")
                 print(e)

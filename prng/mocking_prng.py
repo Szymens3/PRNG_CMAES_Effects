@@ -5,7 +5,7 @@ from .prng import PRNG
 
 class MOCKING_PRNG(PRNG):
 
-    def __init__(self, seed, chunk_size=2**20):
+    def __init__(self, seed, chunk_size=2**12):
         self._seed = (seed)
         self.chunk_size = chunk_size
         self.file_path = f"prng/{self.__str__()}_files/{seed}"

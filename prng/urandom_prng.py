@@ -6,7 +6,8 @@ from functools import reduce
 from .mocking_prng import MOCKING_PRNG
 
 class URANDOM_PRNG(MOCKING_PRNG):
-    def __init__(self, seed, chunk_size=2**20):
+    name='urandom'
+    def __init__(self, seed, chunk_size=2**12):
         super().__init__(seed, chunk_size)
         
                 
