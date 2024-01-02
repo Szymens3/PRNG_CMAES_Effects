@@ -7,3 +7,5 @@ fun.ipynb
 results
 venv
 *_files
+.DS_Store
+settings.json
