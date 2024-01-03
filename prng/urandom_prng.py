@@ -7,17 +7,17 @@ from .mocking_prng import MOCKING_PRNG
 
 class URANDOM_PRNG(MOCKING_PRNG):
     name='urandom'
-    def __init__(self, seed, chunk_size=2**12):
-        super().__init__(seed, chunk_size)
+    def __init__(self, seed):
+        super().__init__(seed)
         
                 
     def __str__(self) -> str:
         return f"urandom_{super().__str__()}"
 
     def _gen_uniform(self, dim: int):
-            random_bytes = os.urandom(dim * 4)
-            random_array = np.frombuffer(random_bytes, dtype=np.uint32)
-            random_array = random_array.reshape((dim,))
-            return random_array/(2**32-1)
+        random_bytes = os.urandom(dim * 4)
+        random_array = np.frombuffer(random_bytes, dtype=np.uint32)
+        random_array = random_array.reshape((dim,))
+        return random_array/(2**32-1)
     
 
