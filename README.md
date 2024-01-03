@@ -18,7 +18,8 @@ python ./run_experiments.py
 ```
 Then in separate terminal you can type tail -f experiments.log to monitor experiments
 
-windows:
+
+## Deactivating virtaul environment:
 ```
-python .\run_experiments.py <n_dim>
+deactivate
 ```
