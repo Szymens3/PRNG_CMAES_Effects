@@ -2,7 +2,10 @@ import pytest
 import time
 import numpy as np
 from prng.urandom_prng import URANDOM_PRNG
-
+from prng.halton_prng import HALTON_PRNG
+from prng.sobol_prng import SOBOL_PRNG
+from scipy.stats import qmc
+from scipy.special import erfinv
 
 
 def test_urandom_creation():
@@ -122,6 +125,45 @@ def test_time_in_10_000_000_calls_loop_over_entire_file():
     g = URANDOM_PRNG(seed)
     for i in range(10_000_000):
         samples = g.std_normal(dim)
+    assert True
+
+def test_time_in_10_000_000_calls_loop_over_entire_file_halton():
+    # Loop 
+    seed = 1000
+    dim = 100
+    g = HALTON_PRNG(seed)
+    for i in range(10_000_000):
+        samples = g.std_normal(dim)
+    assert True
+
+def test_time_in_10_000_000_calls_loop_over_entire_file_sobol():
+    # Loop 
+    seed = 1000
+    dim = 100
+    g = SOBOL_PRNG(seed)
+    for i in range(10_000_000):
+        samples = g.std_normal(dim)
+    assert True
+
+def test_time_in_1_000_000_calls_loop_over_entire_file_sobol():
+    # Loop 
+    seed = 1000
+    dim = 100
+    g = SOBOL_PRNG(seed)
+    for i in range(1_000_000):
+        samples = g.std_normal(dim)
+    assert True
+
+def test_time_in_1_000_000_calls_loop_over_entire_file_sobol_generated():
+    def uniform_to_std_normal(uniform_numbers):
+        normal_numbers = np.sqrt(2) * erfinv(2 * uniform_numbers - 1)
+        return normal_numbers
+    # Loop 
+    seed = 1000
+    dim = 100
+    g = qmc.Sobol(d=1, scramble=True, seed=seed)
+    for i in range(1_000_000):
+        samples = uniform_to_std_normal(g.random(dim).astype(np.float32))
     assert True
 
 
