@@ -4,7 +4,7 @@ from randomgen import Xoroshiro128
 class XOROSHIRO_PRNG(PRNG):
     name='xoroshiro'
     def __init__(self, seed):
-        self._prng = Generator(Xoroshiro128(1234, plusplus=True))
+        self._prng = Generator(Xoroshiro128(seed, plusplus=True))
 
     def __str__(self) -> str:
         return f"xoroshiro_{super().__str__()}"
