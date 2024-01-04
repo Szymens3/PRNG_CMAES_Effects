@@ -4,8 +4,8 @@ __pycache__
 .ipynb_checkpoints
 fun.ipynb
 .CMA-ES
-results
 venv
 *_files
 .DS_Store
 settings.json
+result_copy
