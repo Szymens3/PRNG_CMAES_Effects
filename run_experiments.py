@@ -28,7 +28,7 @@ def run_experiment(directory_path, algorithm_name, func_i, dim, func, rng, seeds
 
 
     for experiment_i, seed in enumerate(seeds):
-        rng_instance = rng(seed)
+        rng_instance = rng(seed, dim)
         initial_mean_vector = rng_instance.std_normal(dim)
         optimizer = CustomCMA(mean=initial_mean_vector, sigma=1.3, bounds=bounds, rng=rng_instance)
 
@@ -89,7 +89,7 @@ def main():
     logging.info(f"Experiments output are in {result_directory} directory")
 
     algorithm_name = "cmaes"
-    seeds = list(range(1000,1051))
+    seeds = list(range(1000,1030))
     all_funcs_2017 = [
         opfunu.cec_based.F12017,
         opfunu.cec_based.F22017,
@@ -121,9 +121,9 @@ def main():
         opfunu.cec_based.F282017,
         opfunu.cec_based.F292017,
     ]
-    prngs = [URANDOM_PRNG, SOBOL_PRNG, HALTON_PRNG,  XOROSHIRO_PRNG, MT_PRNG, LCG_PRNG]
-
-    for dim in [10,30,50,100]:
+    #prngs = [URANDOM_PRNG, SOBOL_PRNG, HALTON_PRNG,  XOROSHIRO_PRNG, MT_PRNG, LCG_PRNG]
+    prngs = [HALTON_PRNG, SOBOL_PRNG]
+    for dim in [10]: #,30,50,100]:
         run_experiments_for_prngs(prngs, all_funcs_2017, algorithm_name, seeds, dim, max_FES_coef=10_000)
 
 if __name__ == "__main__":
