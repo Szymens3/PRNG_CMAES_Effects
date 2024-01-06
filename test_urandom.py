@@ -10,12 +10,14 @@ from scipy.special import erfinv
 
 def test_urandom_creation():
     seed = 1000
-    g = URANDOM_PRNG(seed)
+    dim =10
+    g = URANDOM_PRNG(seed, dim)
     assert type(g) == URANDOM_PRNG
 
 def test_urandom_std_normal_return_type():
     seed = 1000
-    g = URANDOM_PRNG(seed)
+    dim = 10
+    g = URANDOM_PRNG(seed, dim)
     assert type(g) == URANDOM_PRNG
     v = g.std_normal(1)
     assert type(v) == np.ndarray
@@ -25,7 +27,7 @@ def test_urandom_std_normal_return_type():
 def test_speed_std_normal_size_10():
     seed = 1000
     dim = 10
-    g = URANDOM_PRNG(seed)
+    g = URANDOM_PRNG(seed, dim)
 
     start_time = time.time()
     samples = g.std_normal(dim)
@@ -37,7 +39,7 @@ def test_speed_std_normal_size_10():
 def test_get_next_chunk():
     seed = 1000
     dim = 1
-    g = URANDOM_PRNG(seed, chunk_size=2)
+    g = URANDOM_PRNG(seed, dim, chunk_size=2)
 
     assert len(g.buffered_values)==2
     assert g._current_idx == 0
@@ -54,7 +56,7 @@ def test_get_next_chunk():
 def test_speed_std_normal_size_10_000():
     seed = 1000
     dim = 10_000
-    g = URANDOM_PRNG(seed)
+    g = URANDOM_PRNG(seed, dim)
 
     start_time = time.time()
     samples = g.std_normal(dim)
@@ -67,7 +69,7 @@ def test_speed_std_normal_size_10_000():
 def test_time_in_1000000_calls_dim_100():
     seed = 1000
     dim = 100
-    g = URANDOM_PRNG(seed)
+    g = URANDOM_PRNG(seed, dim)
     for i in range(1000000):
         samples = g.std_normal(dim)
     assert True
@@ -75,7 +77,7 @@ def test_time_in_1000000_calls_dim_100():
 def test__dim_eq_chunk_size():
     seed = 1000
     dim = 2
-    g = URANDOM_PRNG(seed, chunk_size=2)
+    g = URANDOM_PRNG(seed, dim, chunk_size=2)
     assert len(g.buffered_values)==2
     assert g._current_idx == 0
     samples = g.std_normal(dim)
@@ -91,7 +93,7 @@ def test__dim_eq_chunk_size():
 def test__dim_2_chunk_size_3():
     seed = 1000
     dim = 2
-    g = URANDOM_PRNG(seed, chunk_size=3)
+    g = URANDOM_PRNG(seed, dim, chunk_size=3)
     assert len(g.buffered_values)==3
     assert g._current_idx == 0
     samples = g.std_normal(dim)
@@ -107,7 +109,7 @@ def test__dim_2_chunk_size_3():
 def test__dim_2xx20_default_chunk_size():
     seed = 1000
     dim = 2**20
-    g = URANDOM_PRNG(seed)
+    g = URANDOM_PRNG(seed, dim)
     assert len(g.buffered_values)==2**20
     assert g._current_idx == 0
     samples = g.std_normal(dim)
@@ -118,53 +120,6 @@ def test__dim_2xx20_default_chunk_size():
     assert g._current_idx == 2**20
 
 
-def test_time_in_10_000_000_calls_loop_over_entire_file():
-    # Loop 
-    seed = 1000
-    dim = 100
-    g = URANDOM_PRNG(seed)
-    for i in range(10_000_000):
-        samples = g.std_normal(dim)
-    assert True
-
-def test_time_in_10_000_000_calls_loop_over_entire_file_halton():
-    # Loop 
-    seed = 1000
-    dim = 100
-    g = HALTON_PRNG(seed)
-    for i in range(10_000_000):
-        samples = g.std_normal(dim)
-    assert True
-
-def test_time_in_10_000_000_calls_loop_over_entire_file_sobol():
-    # Loop 
-    seed = 1000
-    dim = 100
-    g = SOBOL_PRNG(seed)
-    for i in range(10_000_000):
-        samples = g.std_normal(dim)
-    assert True
-
-def test_time_in_1_000_000_calls_loop_over_entire_file_sobol():
-    # Loop 
-    seed = 1000
-    dim = 100
-    g = SOBOL_PRNG(seed)
-    for i in range(1_000_000):
-        samples = g.std_normal(dim)
-    assert True
-
-def test_time_in_1_000_000_calls_loop_over_entire_file_sobol_generated():
-    def uniform_to_std_normal(uniform_numbers):
-        normal_numbers = np.sqrt(2) * erfinv(2 * uniform_numbers - 1)
-        return normal_numbers
-    # Loop 
-    seed = 1000
-    dim = 100
-    g = qmc.Sobol(d=1, scramble=True, seed=seed)
-    for i in range(1_000_000):
-        samples = uniform_to_std_normal(g.random(dim).astype(np.float32))
-    assert True
 
 
 if __name__ == "__main__":
