@@ -1,8 +1,9 @@
-import time
+import time, os
 
 from scipy.special import erfinv
 from scipy.stats import qmc, norm
 import numpy as np
+import matplotlib.pyplot as plt
 
 from prng.prng import PRNG
 from prng.lcg_prng import LCG_PRNG
@@ -20,14 +21,14 @@ def uniform_to_std_normal(uniform_numbers):
 
 
 class SOBOL_NO_FILES(PRNG):
-    def __init__(self, seed):
-        self._prng = qmc.Sobol(d=1, seed=seed)
+    def __init__(self, seed, dim):
+        self._prng = qmc.Sobol(d=dim, seed=seed)
 
     def __str__(self) -> str:
         return f"sobol_no_files{super().__str__()}"
     
     def std_normal(self, dim: int):
-        return uniform_to_std_normal(self._prng.random(dim))
+        return uniform_to_std_normal(self._prng.random(1).astype(np.float32).reshape(-1))
     
 class SOBOL_PRNG_RE(PRNG):
     def __init__(self, seed) -> None:
@@ -42,21 +43,19 @@ class SOBOL_PRNG_RE(PRNG):
         return norm.ppf(samples)
     
 class HALTON_NO_FILES_1_worker(PRNG):
-    def __init__(self, seed):
-        self._prng = qmc.Halton(d=1, seed=seed)
+    def __init__(self, seed, dim):
+        self._prng = qmc.Halton(d=dim, seed=seed)
 
     def __str__(self) -> str:
         return f"halton_no_files{super().__str__()}"
     
     def std_normal(self, dim: int):
-        return uniform_to_std_normal(self._prng.random(dim))
+        return uniform_to_std_normal(self._prng.random(1).astype(np.float32).reshape(-1))
     
 import cProfile
 
-gens = [XOROSHIRO_PRNG, MT_PRNG, LCG_PRNG, SOBOL_PRNG, SOBOL_NO_FILES, HALTON_PRNG, HALTON_NO_FILES_1_worker, URANDOM_PRNG]
+
 #gens = [XOROSHIRO_PRNG, MT_PRNG, LCG_PRNG, SOBOL_PRNG, HALTON_PRNG, URANDOM_PRNG]
-n = 1_000_000
-dim = 100
 
 def test_gen_i(gen_i, n, dim):
     start = time.process_time()
@@ -66,9 +65,93 @@ def test_gen_i(gen_i, n, dim):
     print(f"Gen: {gen_i} took: {end-start} s to generate {n} times {dim} values from std_norm distribution")
 
 
-for gen in gens:
-    gen_i = gen(seed)
-    cProfile.run(f'test_gen_i(gen_i, n={n}, dim={dim})', sort='cumulative')
+def compare_speed(n=1_000_000, dim=100, gens=[XOROSHIRO_PRNG, MT_PRNG, LCG_PRNG, SOBOL_PRNG, SOBOL_NO_FILES, HALTON_PRNG, HALTON_NO_FILES_1_worker, URANDOM_PRNG]):
+    for gen in gens:
+        gen_i = gen(seed, dim)
+        # cProfile.run(f'test_gen_i(gen_i, n={n}, dim={dim})', sort='cumulative')
+        test_gen_i(gen_i, n=n, dim=dim)
+
+def visualize_gen_instance_values_distribution_per_coordinate(gen_i: PRNG, dim=10, total_nr_sampled_values=100_000_000):
+    plt.figure(figsize=(36, 12))
+    values = []
+    for i in range(total_nr_sampled_values//dim):
+        values.append(gen_i.std_normal(dim))
+    values = np.concatenate(values, axis=0)
+
+    for d in range(dim):
+        plt.subplot(((d)// 10)+1, 10, d+1)
+        every_dim = values[d::dim]
+        plt.hist(every_dim, bins=20, alpha=0.7)
+        plt.title(f"Dim {d+1}")
+        plt.xlabel("Value")
+        plt.ylabel("Frequency")
+    plt.suptitle(gen_i, fontsize=16)
+    plt.tight_layout()
+    plt.show()
+
+class HALTON_WITH_DIM(PRNG):
+    def __init__(self, seed, dim):
+        self._dim = dim
+        self._prng = qmc.Halton(d=dim, scramble=True, seed=seed)
+
+    def __str__(self) -> str:
+        return f"halton_with_dim_{self._dim}_{super().__str__()}"
+    
+    def std_normal(self, dim: int):
+        return uniform_to_std_normal(self._prng.random(1).reshape(-1))
+
+def plot_x_numbers_from_file(file_path, n_of_numbers, bin_count=100):
+
+    with open(file_path, 'rb') as file:
+        start = time.process_time()
+        file_size = os.path.getsize(file_path)
+        print(f"File size: {file_size} B")
+        buff = file.read(min(n_of_numbers * 4, file_size))
+        values = np.frombuffer(buff, dtype=np.float32)
+        print("Getting values time:", time.process_time()-start)
+        print("Plotting ", len(values), " values")
+        plot_numbers(values, file_path)
+
+def plot_numbers(values, title ,bin_count=100):
+        plt.figure(figsize=(36, 12))
+        plt.hist(values, bins=bin_count, alpha=0.7)
+        plt.title(title)
+        plt.xlabel("Value")
+        plt.ylabel("Frequency")
+        plt.show()
+
+
+
+if __name__ == "__main__":
+    # gens = [SOBOL_PRNG, HALTON_PRNG, URANDOM_PRNG, XOROSHIRO_PRNG, MT_PRNG, LCG_PRNG]
+    # seed = 1001
+    # dim = 100
+    # nr_values_generated = 10**6
+    # for dim in [10,30,50,100]:
+    #     for gen in gens:
+    #         gen_i = gen(seed, dim)
+    #         # visualize_gen_instance_values_distribution_per_coordinate(gen_i, dim, nr_values_generated)
+
+
+
+
+    compare_speed()
+    
+    # plot_x_numbers_from_file('prng/sobol_prng_files/1001_10',2**30)
+
+
+
+
+
+    # h = HALTON_WITH_DIM(seed, dim)
+    # n_of_points = 1000_000
+    # values = []
+    # for i in range(n_of_points):
+    #     values.append(h.std_normal(None))
+    # values = np.concatenate(values, axis=0)
+    # filtered_values = values[np.logical_or(values > 5, values < -5)]
+    # print(h, filtered_values)
+    # plot_numbers(values, h)
 
 
 
