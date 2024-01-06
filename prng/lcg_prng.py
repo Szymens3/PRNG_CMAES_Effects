@@ -6,7 +6,7 @@ from .prng import PRNG
 
 class LCG_PRNG(PRNG):
     name='lcg'
-    def __init__(self, seed):
+    def __init__(self, seed, dim):
         lcg_mult = 0x1DA942042E4DD58B5
         dxsm_mult = 0xff37f1f758180525
         self._prng = Generator(LCG128Mix(multiplier=lcg_mult, dxsm_multiplier=dxsm_mult, output="dxsm", seed=seed))

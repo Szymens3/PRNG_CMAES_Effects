@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 
 class PRNG(ABC):
     @abstractmethod
-    def __init__(self, seed):
+    def __init__(self, seed, dim):
         pass
 
     def __str__(self) -> str:

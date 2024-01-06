@@ -3,7 +3,7 @@ from numpy.random import Generator
 from randomgen import Xoroshiro128
 class XOROSHIRO_PRNG(PRNG):
     name='xoroshiro'
-    def __init__(self, seed):
+    def __init__(self, seed, dim):
         self._prng = Generator(Xoroshiro128(seed, plusplus=True))
 
     def __str__(self) -> str:
