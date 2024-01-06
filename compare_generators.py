@@ -19,6 +19,8 @@ def uniform_to_std_normal(uniform_numbers):
     normal_numbers = np.sqrt(2) * erfinv(2 * uniform_numbers - 1)
     return normal_numbers
 
+# print(uniform_to_std_normal(np.array([np.float32(1.4901163e-08), np.float32(0.9999999)])))
+
 
 class SOBOL_NO_FILES(PRNG):
     def __init__(self, seed, dim):
@@ -52,6 +54,16 @@ class HALTON_NO_FILES_1_worker(PRNG):
     def std_normal(self, dim: int):
         return uniform_to_std_normal(self._prng.random(1).astype(np.float32).reshape(-1))
     
+class HALTON_NO_FILES_depend(PRNG):
+    def __init__(self, seed, dim):
+        self._prng = qmc.Halton(d=1, seed=seed)
+
+    def __str__(self) -> str:
+        return f"halton_with_dependent_values_per_dim_{super().__str__()}"
+    
+    def std_normal(self, dim: int, n=1):
+        return uniform_to_std_normal(self._prng.random(n).astype(np.float32))
+    
 import cProfile
 
 
@@ -72,7 +84,7 @@ def compare_speed(n=1_000_000, dim=100, gens=[XOROSHIRO_PRNG, MT_PRNG, LCG_PRNG,
         test_gen_i(gen_i, n=n, dim=dim)
 
 def visualize_gen_instance_values_distribution_per_coordinate(gen_i: PRNG, dim=10, total_nr_sampled_values=100_000_000):
-    plt.figure(figsize=(36, 12))
+    plt.figure(figsize=(24, 12))
     values = []
     for i in range(total_nr_sampled_values//dim):
         values.append(gen_i.std_normal(dim))
@@ -122,36 +134,59 @@ def plot_numbers(values, title ,bin_count=100):
 
 
 
-if __name__ == "__main__":
-    # gens = [SOBOL_PRNG, HALTON_PRNG, URANDOM_PRNG, XOROSHIRO_PRNG, MT_PRNG, LCG_PRNG]
-    # seed = 1001
-    # dim = 100
-    # nr_values_generated = 10**6
-    # for dim in [10,30,50,100]:
-    #     for gen in gens:
-    #         gen_i = gen(seed, dim)
-    #         # visualize_gen_instance_values_distribution_per_coordinate(gen_i, dim, nr_values_generated)
+# if __name__ == "__main__":
+#     # gens = [SOBOL_PRNG, HALTON_PRNG] #, URANDOM_PRNG, XOROSHIRO_PRNG, MT_PRNG, LCG_PRNG]
+#     # seed = 1001
+#     # dim = 100
+#     # nr_values_generated = 10**6
+#     # for dim in [10,30,50,100]:
+#     #     for gen in gens:
+#     #         gen_i = gen(seed, dim)
+#     #         # visualize_gen_instance_values_distribution_per_coordinate(gen_i, dim, nr_values_generated)
 
 
+#     # visualize_gen_instance_values_distribution_per_coordinate(HALTON_NO_FILES_depend(seed, 10), 10, 10_000_000)
 
 
-    compare_speed()
+#     # compare_speed()
+
+
     
-    # plot_x_numbers_from_file('prng/sobol_prng_files/1001_10',2**30)
+#     # plot_x_numbers_from_file('prng/sobol_prng_files/1001_10',2**30)
+
+#     gens = [SOBOL_NO_FILES, HALTON_NO_FILES_1_worker]
+#     seeds =list(range(1000,1051))
+#     max_FES_coef = 10_000
+#     for gen in gens:
+#         for dim in [10,30,50,100]:
+#             st_s = time.process_time()
+#             for seed in seeds:
+#                 gen_i = gen(seed, dim)
+#                 st = time.process_time()
+#                 for i in range(max_FES_coef*dim):
+#                     point = gen_i.std_normal(dim)
+#                 print(f"{gen_i} seed: {seed} generated {max_FES_coef*dim} points of dim: {dim} in {time.process_time()-st} s")
+#             print(f"{gen_i} generated vals for all seeds for dim: {dim} in {time.process_time()-st_s} s")
 
 
+#     # 
+#     # for gen in gens:
+#     #     for dim in [10,30,50,100]:
+#     #         st = time.process_time()
+#     #         for seed in seeds:
+#     #             gen_i = gen(seed, dim)
+#     #         print(f"Time to generate all 51 files for gen: {gen.name} for dim: {dim} generated in: {time.process_time()-st} s")
 
 
-
-    # h = HALTON_WITH_DIM(seed, dim)
-    # n_of_points = 1000_000
-    # values = []
-    # for i in range(n_of_points):
-    #     values.append(h.std_normal(None))
-    # values = np.concatenate(values, axis=0)
-    # filtered_values = values[np.logical_or(values > 5, values < -5)]
-    # print(h, filtered_values)
-    # plot_numbers(values, h)
+#     # h = HALTON_WITH_DIM(seed, dim)
+#     # n_of_points = 1000_000
+#     # values = []
+#     # for i in range(n_of_points):
+#     #     values.append(h.std_normal(None))
+#     # values = np.concatenate(values, axis=0)
+#     # filtered_values = values[np.logical_or(values > 5, values < -5)]
+#     # print(h, filtered_values)
+#     # plot_numbers(values, h)
 
 
 
