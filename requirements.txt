@@ -1,5 +1,4 @@
 numpy==1.26.2
 randomgen==1.26.0
-opfunu==1.0.1
 setuptools
 scipy
