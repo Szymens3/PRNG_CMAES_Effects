@@ -46,7 +46,7 @@ def run_experiment(directory_path, algorithm_name, func_i, dim, func, rng, seeds
                 checkpoint_pointer += 1
 
         experiments_results[:, experiment_i] = run_results
-        logging.info(f"Experiment nr: {experiment_i+1} for function nr:{func_i+1}, dimension: {dim} executed")
+        logging.info(f"Experiment nr: {experiment_i+1} with seed: {seed} for function nr:{func_i+1}, dimension: {dim} executed")
     np.savetxt(file_path, experiments_results, fmt='%d', delimiter=' ')
     logging.info(f"Experiments for: function number {func_i+1}, dimension: {dim} have been completed and saved!")
 
@@ -85,13 +85,24 @@ def main():
     logging.info(f"Experiments output are in {result_directory} directory")
 
     algorithm_name = "cmaes"
-    seeds = list(range(1000,1030)) # TODO
+    seeds = list(range(1000,1003)) # TODO
+
     all_funcs_2017 = all_functions
-    prngs = [URANDOM_PRNG, SOBOL_PRNG, HALTON_PRNG,  XOROSHIRO_PRNG, MT_PRNG, LCG_PRNG]
-    for dim in [10,30,50,100]:
+    # prngs = [URANDOM_PRNG, SOBOL_PRNG, HALTON_PRNG] #,  XOROSHIRO_PRNG, MT_PRNG, LCG_PRNG]
+    prngs = [MT_PRNG]
+    for dim in [10]: #,30,50,100]:
         run_experiments_for_prngs(prngs, all_funcs_2017, algorithm_name, seeds, dim, max_FES_coef=10_000)
 
+def handle_numpy_warnings(message, category, filename, lineno, file=None, line=None):
+    logging.warning(f'NumPy warning: {category.__name__}: {message}')
+
+
 if __name__ == "__main__":
+    import warnings
+
+    warnings.showwarning = handle_numpy_warnings
+    np.seterr(over='warn')
     log_name = 'experiments.log'
     logging.basicConfig(filename=log_name, encoding='utf-8', level=logging.DEBUG)
     main()
+    warnings.resetwarnings()
