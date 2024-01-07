@@ -12,8 +12,15 @@ class MOCKING_PRNG(PRNG):
         self.max_FES_coef = max_FES_coef
         self._dim = dim
         self.chunk_size = chunk_size
-        self.from_start_counter = 1
+        
         self.setup()
+
+
+    def init_file_path(self):
+        self.file_path = f"prng/{self.__str__()}_files/{self._seed}_{self._dim}"
+        
+    def setup(self):
+        self.init_file_path()
         directory_path = os.path.dirname(self.file_path)
         os.makedirs(directory_path, exist_ok=True)
         if not os.path.exists(self.file_path):
@@ -21,16 +28,13 @@ class MOCKING_PRNG(PRNG):
             self.generate_file()
             logging.info("File generated.")
         try:
+            self.from_start_counter = 0
             self.file = open(self.file_path, 'rb')
             self._current_idx=0
             self.buffered_values=None
             self._get_next_chunk()
         except:
             raise Exception
-
-        
-    def setup(self):
-        self.file_path = f"prng/{self.__str__()}_files/{self._seed}_{self._dim}"
 
     
     def generate_file(self):
@@ -63,7 +67,7 @@ class MOCKING_PRNG(PRNG):
             v = self.buffered_values[self._current_idx : self._current_idx + dim]
             self._current_idx += dim
             return v
-        init = self.buffered_values[self._current_idx : self._current_idx + dim]
+        init = self.buffered_values[self._current_idx:]
         self._current_idx = 0
         self._get_next_chunk()
         rest = self.std_normal(dim-len(init))

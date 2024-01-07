@@ -1,14 +1,13 @@
-import json, os
+import os
 
 import numpy as np
-from functools import reduce
 
 from .mocking_prng import MOCKING_PRNG
 
 class URANDOM_PRNG(MOCKING_PRNG):
     name='urandom'
-    def __init__(self, seed, dim, n_values_per_file=2**27, chunk_size=2**20):
-        super().__init__(seed, dim, n_values_per_file, chunk_size)
+    def __init__(self, seed, dim, max_FES_coef=10_000, chunk_size=2**20):
+        super().__init__(seed, dim, max_FES_coef=max_FES_coef, chunk_size=chunk_size)
         
                 
     def __str__(self) -> str:
@@ -20,7 +19,7 @@ class URANDOM_PRNG(MOCKING_PRNG):
         random_array = random_array.reshape((dim,))
         return random_array/(2**32-1)
     
-    def setup(self):
+    def init_file_path(self):
         self.file_path = f"prng/{self.__str__()}_files/{self._seed}"
         
     
