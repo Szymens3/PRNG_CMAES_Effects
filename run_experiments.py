@@ -85,12 +85,10 @@ def main():
     logging.info(f"Experiments output are in {result_directory} directory")
 
     algorithm_name = "cmaes"
-    seeds = list(range(1000,1003)) # TODO
-
+    seeds = list(range(1000,1030)) # TODO
     all_funcs_2017 = all_functions
-    # prngs = [URANDOM_PRNG, SOBOL_PRNG, HALTON_PRNG] #,  XOROSHIRO_PRNG, MT_PRNG, LCG_PRNG]
-    prngs = [MT_PRNG]
-    for dim in [10]: #,30,50,100]:
+    prngs = [URANDOM_PRNG, SOBOL_PRNG, HALTON_PRNG,  XOROSHIRO_PRNG, MT_PRNG, LCG_PRNG]
+    for dim in [10,30,50,100]:
         run_experiments_for_prngs(prngs, all_funcs_2017, algorithm_name, seeds, dim, max_FES_coef=10_000)
 
 def handle_numpy_warnings(message, category, filename, lineno, file=None, line=None):
