@@ -12,3 +12,4 @@ results_copy
 results
 experiments*.log
 *zip
+logs
