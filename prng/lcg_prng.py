@@ -10,7 +10,7 @@ class LcgPrng(Prng):
 
     name = "lcg"
 
-    def __init__(self, seed, dim):
+    def __init__(self, seed, dim, logger):
         lcg_mult = 0x1DA942042E4DD58B5
         dxsm_mult = 0xFF37F1F758180525
         self._prng = Generator(

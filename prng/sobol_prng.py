@@ -10,9 +10,9 @@ class SobolPrng(MockingPrng):
 
     name = "sobol"
 
-    def __init__(self, seed, dim, max_fes_coef=10_000, chunk_size=2**20) -> None:
+    def __init__(self, seed, dim, max_fes_coef=10_000, chunk_size=2**20, logger=None) -> None:
         self._prng = qmc.Sobol(d=dim, scramble=True, seed=seed)
-        super().__init__(seed, dim, max_fes_coef=max_fes_coef, chunk_size=chunk_size)
+        super().__init__(seed, dim, max_fes_coef=max_fes_coef, chunk_size=chunk_size, logger=logger)
 
     def __str__(self) -> str:
         return f"sobol_{super().__str__()}"

@@ -10,7 +10,7 @@ class MtPrng(Prng):
 
     name = "mt"
 
-    def __init__(self, seed, dim):
+    def __init__(self, seed, dim, logger):
         self._prng = np.random.RandomState(seed)
 
     def __str__(self) -> str:

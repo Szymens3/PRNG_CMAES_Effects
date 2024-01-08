@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 class Prng(ABC):
     """Base Class for generators for CustomCMA class"""
     @abstractmethod
-    def __init__(self, seed, dim):
+    def __init__(self, seed, dim, logger):
         pass
 
     def __str__(self) -> str:

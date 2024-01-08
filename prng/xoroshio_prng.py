@@ -10,7 +10,7 @@ class XoroshiroPrng(Prng):
 
     name = "xoroshiro"
 
-    def __init__(self, seed, dim):
+    def __init__(self, seed, dim, logger):
         self._prng = Generator(Xoroshiro128(seed, plusplus=True))
 
     def __str__(self) -> str:

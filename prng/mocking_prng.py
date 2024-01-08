@@ -12,7 +12,8 @@ from .prng import Prng
 class MockingPrng(Prng):
     """Base Class for pseudo random numbers generators that read values from files"""
 
-    def __init__(self, seed, dim, max_fes_coef=10_000, chunk_size=2**20):
+    def __init__(self, seed, dim, max_fes_coef=10_000, chunk_size=2**20, logger=None):
+        self._logger = logger
         self._seed = seed
         self.max_fes_coef = max_fes_coef
         self._dim = dim
@@ -32,27 +33,27 @@ class MockingPrng(Prng):
         directory_path = os.path.dirname(self._file_path)
         os.makedirs(directory_path, exist_ok=True)
         if not os.path.exists(self._file_path):
-            logging.info(f"File: {self._file_path} not found. Generating...")
+            self._logger.info(f"File: {self._file_path} not found. Generating...")
             self._generate_file()
-            logging.info("File generated.")
+            self._logger.info("File generated.")
 
         try:
             self.file = open(self._file_path, "rb")
         except FileNotFoundError as file_not_found_error:
-            logging.error(f"File not found: {self._file_path}")
+            self._logger.error(f"File not found: {self._file_path}")
             raise file_not_found_error
         except PermissionError as permission_error:
-            logging.error(
+            self._logger.error(
                 f"Permission denied while opening file: {self._file_path}"
             )
             raise permission_error
         except Exception as exc:
-            logging.error(f"Error encountered while opening file: {exc}")
+            self._logger.error(f"Error encountered while opening file: {exc}")
             raise exc
         try:
             self._get_next_chunk()
         except Exception as exc:
-            logging.error("Error encountered while getting next chunk from file")
+            self._logger.error("Error encountered while getting next chunk from file")
             raise exc
 
     def _generate_file(self):
@@ -104,7 +105,7 @@ class MockingPrng(Prng):
             self.buffered_values = np.frombuffer(chunk, dtype=np.float32)
             return
         self.from_start_counter += 1
-        logging.warning(self._get_file_reusing_msg())
+        self._logger.warning(self._get_file_reusing_msg())
         self.file.seek(0)
         chunk = self.file.read(self.chunk_size * 4)
         if chunk:
