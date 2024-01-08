@@ -10,3 +10,5 @@ venv
 settings.json
 results_copy
 results
+experiments*.log
+*zip
