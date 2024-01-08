@@ -4,6 +4,10 @@ Study the Impact of Pseudo-Random Number Generator Selection on CMA-ES Algorithm
 """
 import os
 import logging
+import warnings
+import argparse
+from multiprocessing import Process
+
 import numpy as np
 
 from cec2017.functions import all_functions
@@ -16,9 +20,18 @@ from prng.halton_prng import HaltonPrng
 from prng.sobol_prng import SobolPrng
 from cmaes.custom_cma import CustomCMA
 
+ALGORITHM_NAME = "cmaes"
+
 
 def _run_experiment(
-    directory_path, algorithm_name, func_i, dim, func, rng, seeds, max_fes_coef=10_000
+    logger,
+    prng,
+    i,
+    func,
+    seeds,
+    dim,
+    result_dir,
+    max_fes_coef=10_000,
 ):
     max_fes = max_fes_coef * dim
     bounds = np.array([[-100, 100]] * dim)
@@ -26,20 +39,16 @@ def _run_experiment(
         [0.01, 0.02, 0.03, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
     )
 
-    file_path = f"{directory_path}/{algorithm_name}_{func_i+1}_{dim}"
+    file_path = f"{result_dir}/{ALGORITHM_NAME}_{i}_{dim}"
 
-    y_global = (
-        func_i + 1
-    ) * 100  # WORKS ONLY if EXPERIMENTS ARE RUN WITH ALL FUNCTIONS
+    y_global = i * 100
 
     experiments_results = np.zeros((len(run_checkpoints), len(seeds)))
 
     for experiment_i, seed in enumerate(seeds):
-        rng_instance = rng(seed, dim)
+        rng_instance = prng(seed, dim, logger=logger)
         initial_mean_vector = rng_instance.std_normal(dim)
-        optimizer = CustomCMA(
-            mean=initial_mean_vector, sigma=1.3, bounds=bounds, rng=rng_instance
-        )
+        optimizer = CustomCMA(mean=initial_mean_vector, sigma=1.3, bounds=bounds, rng=rng_instance)
 
         run_results = np.zeros(len(run_checkpoints))
         checkpoint_pointer = 0
@@ -47,9 +56,9 @@ def _run_experiment(
         value = func([optimizer._mean])[0]
         fes = 1
         while abs(value - y_global) > 10 ** (-8) and fes < max_fes:
-            xs = [optimizer.ask() for i in range(optimizer.population_size)]
+            xs = [optimizer.ask() for _ in range(optimizer.population_size)]
             values = func(xs)
-            solutions = [(xs[i], values[i]) for i in range(optimizer.population_size)]
+            solutions = [(xs[j], values[j]) for j in range(optimizer.population_size)]
             optimizer.tell(solutions)
             value = func([optimizer._mean])[0]
             fes += optimizer.population_size + 1  # + 1 for evaluating optimizer._mean
@@ -58,101 +67,152 @@ def _run_experiment(
                 checkpoint_pointer += 1
 
         experiments_results[:, experiment_i] = run_results
-        logging.info(
-            _get_msg_after_experiment_per_seed(experiment_i + 1, seed, func_i + 1, dim)
-        )
+        logger.info(_get_msg_after_experiment_per_seed((experiment_i + 1), seed, i, dim))
     np.savetxt(file_path, experiments_results, fmt="%d", delimiter=" ")
-    logging.info(_get_msg_after_all_seeds(func_i + 1, dim))
+    logger.info(_get_msg_after_all_seeds(i, dim))
 
 
 def _get_msg_after_all_seeds(func_nr, dim):
-    return f"Experiments for: function number {func_nr}, \
-        dimension: {dim} have been completed and saved!"
+    return f"Experiments for: function number {func_nr}, dimension: {dim} have been completed and saved!"
 
 
 def _get_msg_after_experiment_per_seed(experiment_nr, seed, func_nr, dim):
-    return f"Experiment nr: {experiment_nr} with seed: {seed} \
-        for function nr:{func_nr}, dimension: {dim} executed"
+    return f"Experiment nr: {experiment_nr} with seed: {seed} for function nr:{func_nr}, dimension: {dim} executed"
 
 
-def _run_experiments_for_prngs(
-    prngs, all_funcs_2017, algorithm_name, seeds, dim, max_fes_coef=10_000
+def _run_experiments_for_prng_in_try_catch(
+    logger,
+    prng,
+    i,
+    func,
+    seeds,
+    dim,
+    result_dir,
+    max_fes_coef=10_000,
 ):
-    # pylint: disable=W0640
-    for prng in prngs:
-        directory_path = f"results/{prng.name}"
-        os.makedirs(directory_path, exist_ok=True)
-        logging.info(f"Running experiments for: {prng.name} generator")
-        for func_i, func in enumerate(all_funcs_2017):
-            try:
-                _run_experiment(
-                    directory_path,
-                    algorithm_name,
-                    func_i,
-                    dim,
-                    func,
-                    prng,
-                    seeds,
-                    max_fes_coef,
-                )
-            except SystemExit as e:
-                logging.warning(
-                    f"Error for function {func_i+1} and dimension {dim}"
-                )
-                logging.warning(e)
-                continue
-            except AssertionError as e:
-                logging.warning(
-                    f"Error for function {func_i+1} and dimension {dim}"
-                )
-                logging.warning(e)
-                continue
-            except FileNotFoundError as e:
-                logging.warning(
-                    f"Error for function {func_i+1} and dimension {dim}"
-                )
-                logging.warning(e)
-                continue
-            # pylint: disable=W0718
-            except Exception as e:
-                logging.warning(
-                    f"Mysterious error for function {func_i+1} and dimension {dim}"
-                )
-                logging.warning(e)
-                continue
+    try:
+        _run_experiment(
+            logger,
+            prng,
+            i,
+            func,
+            seeds,
+            dim,
+            result_dir,
+            max_fes_coef=max_fes_coef,
+        )
+    except SystemExit as e:
+        logger.warning(f"Error for function {i} and dimension {dim}")
+        logger.warning(e)
+    except AssertionError as e:
+        logger.warning(f"Error for function {i} and dimension {dim}")
+        logger.warning(e)
+    except FileNotFoundError as e:
+        logger.warning(f"Error for function {i} and dimension {dim}")
+        logger.warning(e)
+    # pylint: disable=W0718
+    except Exception as e:
+        logger.warning(f"Mysterious error for function {i} and dimension {dim}")
+        logger.warning(e)
 
 
-def main():
-    """Function to run all experiments"""
-    logging.info(
-        "Starting experiments for Studying the Impact of Pseudo-Random \
-            Number Generator Selection on CMA-ES Algorithm."
-    )
-    result_directory = "results"
-    logging.info(f"Experiments output are in {result_directory} directory")
+def _setup_logs(prng, i, log_dir):
+    # pylint: disable=C0103
+    log_path = f"{log_dir}/{prng.name}/experiments_for_func_{i}.log"
 
-    algorithm_name = "cmaes"
-    seeds = list(range(1000, 1030))
-    all_funcs_2017 = all_functions
-    prngs = [UrandomPrng, SobolPrng, HaltonPrng, XoroshiroPrng, MtPrng, LcgPrng]
-    for dim in [10, 30, 50, 100]:
-        _run_experiments_for_prngs(
-            prngs, all_funcs_2017, algorithm_name, seeds, dim, max_fes_coef=10_000
+    logger = logging.getLogger(f"logger_for_function_{i}")
+    logger.setLevel(logging.DEBUG)
+    file_handler = logging.FileHandler(log_path, mode="w")
+    file_handler.setLevel(logging.DEBUG)
+    formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+    file_handler.setFormatter(formatter)
+    logger.addHandler(file_handler)
+
+    def _handle_numpy_warnings(message, category, filename, lineno, file=None, line=None):
+        logger.warning(f"NumPy warning: {category.__name__}: {message}")
+
+    np.seterr(over="warn")
+    warnings.showwarning = _handle_numpy_warnings
+    return logger
+
+
+def _run_experiments_per_function(prng, i, func, seeds, dims, result_dir, log_dir):
+    logger = _setup_logs(prng, i, log_dir)
+
+    for dim in dims:
+        _run_experiments_for_prng_in_try_catch(
+            logger,
+            prng,
+            i,
+            func,
+            seeds,
+            dim,
+            result_dir,
+            max_fes_coef=10_000,
         )
 
 
-# pylint: disable=W0613
-def _handle_numpy_warnings(message, category, filename, lineno, file=None, line=None):
-    logging.warning(f"NumPy warning: {category.__name__}: {message}")
+def _split_work_per_function(prng, seeds, dims, result_dir, log_dir):
+    ps = []
+    for i, func in enumerate(all_functions, start=1):
+        p = Process(
+            target=_run_experiments_per_function,
+            args=(prng, i, func, seeds, dims, result_dir, log_dir),
+        )
+        p.start()
+        ps.append(p)
+
+    for i, func in enumerate(all_functions):
+        ps[i].join()
+
+
+def _split_work_per_generators(prngs, seeds, dims, result_dir, log_dir):
+    ps = []
+    for prng in prngs:
+        results_per_prng_dir = f"{result_dir}/{prng.name}"
+        os.makedirs(f"{log_dir}/{prng.name}", exist_ok=True)
+        os.makedirs(results_per_prng_dir, exist_ok=True)
+        p = Process(
+            target=_split_work_per_function,
+            args=(prng, seeds, dims, results_per_prng_dir, log_dir),
+        )
+        p.start()
+        ps.append(p)
+
+    for i in range(len(prngs)):
+        ps[i].join()
 
 
 if __name__ == "__main__":
-    import warnings
+    pid = os.getpid()
+    print(f"The MAIN Process ID (PID) of this Python program is: {pid}")
+    parser = argparse.ArgumentParser(description="")
+    parser.add_argument(
+        "--second_half",
+        action="store_true",
+        help="Run SOBOL HALTON and URANDOM instead of MT LCG and XOROSHIRO",
+    )
+    args = parser.parse_args()
 
-    warnings.showwarning = _handle_numpy_warnings
-    np.seterr(over="warn")
-    # pylint: disable=C0103
-    log_name = "experiments.log"
-    logging.basicConfig(filename=log_name, encoding="utf-8", level=logging.DEBUG)
-    main()
-    warnings.resetwarnings()
+    prngs_first_half = [MtPrng, LcgPrng, XoroshiroPrng]
+    prngs_second_half = [SobolPrng, HaltonPrng, UrandomPrng]
+
+    DIMS = [10, 30, 50, 100]
+    SEEDS = list(range(1000, 1030))
+
+    if args.second_half:
+        curr_prngs = prngs_second_half
+        # All files should be generated after this for loop
+        for prng in curr_prngs:
+            for seed in SEEDS:
+                for dim in DIMS:
+                    gen_i = prng(seed, dim)
+    else:
+        curr_prngs = prngs_first_half
+
+    RESULT_DIR = "results"
+    LOG_DIR = "logs"
+    os.makedirs(RESULT_DIR, exist_ok=True)
+    os.makedirs(LOG_DIR, exist_ok=True)
+
+    _split_work_per_generators(curr_prngs, SEEDS, DIMS, RESULT_DIR, LOG_DIR)
