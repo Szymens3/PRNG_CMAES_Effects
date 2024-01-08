@@ -1,25 +1,9 @@
 # CMA-ES Prng Impact
-
-## Python virtual environment:
+## HOW TO RUN EXPERIMENTS?
+```bash
+> git clone https://github.com/Szymens3/PRNG_CMAES_Effects
+> cd PRNG_CMAES_Effects
+> chmod +x run_experiments.sh
+> ./run_experiments.sh
 ```
-python3 -m venv venv
-source venv/bin/activate
-```
-
-## Installation
-```
-pip install -r requirements.txt
-```
-
-## Usage
-linux:
-```
-python ./run_experiments.py
-```
-Then in separate terminal you can type tail -f experiments.log to monitor experiments
-
-
-## Deactivating virtaul environment:
-```
-deactivate
-```
+## All left to do is wait
