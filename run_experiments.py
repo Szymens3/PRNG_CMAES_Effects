@@ -116,7 +116,27 @@ def _run_experiments_for_prng_in_try_catch(
         logger.warning(e)
 
 
-def _setup_logs(prng, i, log_dir):
+def _setup_logger_per_prng_per_seed(prng, seed, log_dir):
+    # pylint: disable=C0103
+    log_path = f"{log_dir}/file_generation_seed_{seed}.log"
+
+    logger = logging.getLogger(f"logger_{prng.name}_seed_{seed}")
+    logger.setLevel(logging.DEBUG)
+    file_handler = logging.FileHandler(log_path, mode="w")
+    file_handler.setLevel(logging.DEBUG)
+    formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+    file_handler.setFormatter(formatter)
+    logger.addHandler(file_handler)
+
+    def _handle_numpy_warnings(message, category, filename, lineno, file=None, line=None):
+        logger.warning(f"NumPy warning: {category.__name__}: {message}")
+
+    np.seterr(over="warn")
+    warnings.showwarning = _handle_numpy_warnings
+    return logger
+
+
+def _setup_logger_per_prgn_per_function(prng, i, log_dir):
     # pylint: disable=C0103
     log_path = f"{log_dir}/{prng.name}/experiments_for_func_{i}.log"
 
@@ -137,7 +157,7 @@ def _setup_logs(prng, i, log_dir):
 
 
 def _run_experiments_per_function(prng, i, func, seeds, dims, result_dir, log_dir):
-    logger = _setup_logs(prng, i, log_dir)
+    logger = _setup_logger_per_prgn_per_function(prng, i, log_dir)
 
     for dim in dims:
         _run_experiments_for_prng_in_try_catch(
@@ -183,6 +203,42 @@ def _split_work_per_generators(prngs, seeds, dims, result_dir, log_dir):
         ps[i].join()
 
 
+def _initialize_prng_per_dims(prng, seed, dims, log_dir):
+    logger = _setup_logger_per_prng_per_seed(prng, seed, log_dir)
+    for dim in dims:
+        _ = prng(seed, dim, logger=logger)
+
+
+def _split_file_generation_per_seed(prng, seeds, dims, log_dir):
+    ps = []
+    for seed in seeds:
+        p = Process(
+            target=_initialize_prng_per_dims,
+            args=(prng, seed, dims, log_dir),
+        )
+        p.start()
+        ps.append(p)
+
+    for i in range(len(seeds)):
+        ps[i].join()
+
+
+def _pregenerate_files(prngs, seeds, dims, log_dir):
+    ps = []
+    for prng in prngs:
+        file_generation_subdirectory = f"{log_dir}/file_generation/{prng.name}"
+        os.makedirs(f"{file_generation_subdirectory}", exist_ok=True)
+        p = Process(
+            target=_split_file_generation_per_seed,
+            args=(prng, seeds, dims, file_generation_subdirectory),
+        )
+        p.start()
+        ps.append(p)
+
+    for i in range(len(prngs)):
+        ps[i].join()
+
+
 if __name__ == "__main__":
     pid = os.getpid()
     print(f"The MAIN Process ID (PID) of this Python program is: {pid}")
@@ -200,19 +256,16 @@ if __name__ == "__main__":
     DIMS = [10, 30, 50, 100]
     SEEDS = list(range(1000, 1030))
 
-    if args.second_half:
+    LOG_DIR = "logs"
+    os.makedirs(LOG_DIR, exist_ok=True)
+
+    if not args.second_half:
         curr_prngs = prngs_second_half
-        # All files should be generated after this for loop
-        for prng in curr_prngs:
-            for seed in SEEDS:
-                for dim in DIMS:
-                    gen_i = prng(seed, dim)
+        _pregenerate_files(curr_prngs, SEEDS, DIMS, LOG_DIR)
     else:
         curr_prngs = prngs_first_half
 
     RESULT_DIR = "results"
-    LOG_DIR = "logs"
     os.makedirs(RESULT_DIR, exist_ok=True)
-    os.makedirs(LOG_DIR, exist_ok=True)
 
     _split_work_per_generators(curr_prngs, SEEDS, DIMS, RESULT_DIR, LOG_DIR)
