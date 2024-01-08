@@ -1,14 +1,18 @@
+"""Module with Halton Generator class"""
+
 import numpy as np
 from scipy.stats import qmc
-from .mocking_prng import MOCKING_PRNG
+from .mocking_prng import MockingPrng
 
 
-class HALTON_PRNG(MOCKING_PRNG):
-    name='halton'
-    def __init__(self, seed, dim, max_FES_coef=10_000, chunk_size=2**20)-> None:
+class HaltonPrng(MockingPrng):
+    """Halton psudo random numbers generator - pregenerates file and reads it"""
+
+    name = "halton"
+
+    def __init__(self, seed, dim, max_fes_coef=10_000, chunk_size=2**20) -> None:
         self._prng = qmc.Halton(d=dim, scramble=True, seed=seed)
-        super().__init__(seed, dim, max_FES_coef=max_FES_coef, chunk_size=chunk_size)
-        
+        super().__init__(seed, dim, max_fes_coef=max_fes_coef, chunk_size=chunk_size)
 
     def __str__(self) -> str:
         return f"halton_{super().__str__()}"

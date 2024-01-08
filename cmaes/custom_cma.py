@@ -3,7 +3,7 @@ from typing import Optional, cast
 import numpy as np
 
 from .cma import CMA
-from prng.prng import PRNG
+from prng.prng import Prng
 
 
 class CustomCMA(CMA):
@@ -11,7 +11,7 @@ class CustomCMA(CMA):
             self,
             mean: np.ndarray,
             sigma: float,
-            rng: PRNG,
+            rng: Prng,
             bounds: Optional[np.ndarray] = None,
             n_max_resampling: int = 100,
             population_size: Optional[int] = None,

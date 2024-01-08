@@ -1,24 +1,22 @@
-import pytest
+
+
 import time
+
 import numpy as np
-from prng.urandom_prng import URANDOM_PRNG
-from prng.halton_prng import HALTON_PRNG
-from prng.sobol_prng import SOBOL_PRNG
-from scipy.stats import qmc
-from scipy.special import erfinv
+from prng.urandom_prng import UrandomPrng
 
 
 def test_urandom_creation():
     seed = 1000
     dim =10
-    g = URANDOM_PRNG(seed, dim)
-    assert type(g) == URANDOM_PRNG
+    g = UrandomPrng(seed, dim)
+    assert type(g) == UrandomPrng
 
 def test_urandom_std_normal_return_type():
     seed = 1000
     dim = 10
-    g = URANDOM_PRNG(seed, dim)
-    assert type(g) == URANDOM_PRNG
+    g = UrandomPrng(seed, dim)
+    assert type(g) == UrandomPrng
     v = g.std_normal(1)
     assert type(v) == np.ndarray
     v_1 = v[0]
@@ -27,7 +25,7 @@ def test_urandom_std_normal_return_type():
 def test_speed_std_normal_size_10():
     seed = 1000
     dim = 10
-    g = URANDOM_PRNG(seed, dim)
+    g = UrandomPrng(seed, dim)
 
     start_time = time.time()
     samples = g.std_normal(dim)
@@ -39,7 +37,7 @@ def test_speed_std_normal_size_10():
 def test_get_next_chunk():
     seed = 1000
     dim = 1
-    g = URANDOM_PRNG(seed, dim, chunk_size=2)
+    g = UrandomPrng(seed, dim, chunk_size=2)
 
     assert len(g.buffered_values)==2
     assert g._current_idx == 0
@@ -56,7 +54,7 @@ def test_get_next_chunk():
 def test_speed_std_normal_size_10_000():
     seed = 1000
     dim = 10_000
-    g = URANDOM_PRNG(seed, dim)
+    g = UrandomPrng(seed, dim)
 
     start_time = time.time()
     samples = g.std_normal(dim)
@@ -69,7 +67,7 @@ def test_speed_std_normal_size_10_000():
 def test_time_in_1000000_calls_dim_100():
     seed = 1000
     dim = 100
-    g = URANDOM_PRNG(seed, dim)
+    g = UrandomPrng(seed, dim)
     for i in range(1000000):
         samples = g.std_normal(dim)
     assert True
@@ -77,7 +75,7 @@ def test_time_in_1000000_calls_dim_100():
 def test__dim_eq_chunk_size():
     seed = 1000
     dim = 2
-    g = URANDOM_PRNG(seed, dim, chunk_size=2)
+    g = UrandomPrng(seed, dim, chunk_size=2)
     assert len(g.buffered_values)==2
     assert g._current_idx == 0
     samples = g.std_normal(dim)
@@ -93,7 +91,7 @@ def test__dim_eq_chunk_size():
 def test__dim_2_chunk_size_3():
     seed = 1000
     dim = 2
-    g = URANDOM_PRNG(seed, dim, chunk_size=3)
+    g = UrandomPrng(seed, dim, chunk_size=3)
     assert len(g.buffered_values)==3
     assert g._current_idx == 0
     samples = g.std_normal(dim)
@@ -109,7 +107,7 @@ def test__dim_2_chunk_size_3():
 def test__dim_2xx20_default_chunk_size():
     seed = 1000
     dim = 2**20
-    g = URANDOM_PRNG(seed, dim)
+    g = UrandomPrng(seed, dim)
     assert len(g.buffered_values)==2**20
     assert g._current_idx == 0
     samples = g.std_normal(dim)

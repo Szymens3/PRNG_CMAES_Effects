@@ -1,7 +1,9 @@
+"""Module for base class for Generators"""
 from abc import ABC, abstractmethod
 
 
-class PRNG(ABC):
+class Prng(ABC):
+    """Base Class for generators for CustomCMA class"""
     @abstractmethod
     def __init__(self, seed, dim):
         pass
@@ -10,10 +12,9 @@ class PRNG(ABC):
         return "prng"
 
     @abstractmethod
-    def std_normal(self, dim: int):
+    def std_normal(self, dim: int, n: int):
         """
         Return a vector of standard normal random variables.
         :param dim:
         :return:
         """
-        pass

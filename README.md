@@ -1,4 +1,4 @@
-# CMA-ES PRNG Impact
+# CMA-ES Prng Impact
 
 ## Python virtual environment:
 ```

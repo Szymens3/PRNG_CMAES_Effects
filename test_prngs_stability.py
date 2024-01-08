@@ -3,7 +3,7 @@ import tempfile
 from itertools import permutations
 import numpy as np
 
-from prng.sobol_prng import SOBOL_PRNG
+from prng.sobol_prng import SobolPrng
 
 
 def compare_binary_files(file1_path, file2_path):
@@ -93,17 +93,17 @@ def test_compare_binary_files_diff_files_bigger_than_chunk_size():
 
 #     assert compare_binary_files(file1_path, file2_path)
 
-# Change file_path in mocking_prng and n_values_per_file and chunk_size
-from prng.lcg_prng import LCG_PRNG
-from prng.mt_prng import MT_PRNG
-from prng.xoroshio_prng import XOROSHIRO_PRNG
-from prng.urandom_prng import URANDOM_PRNG
-from prng.halton_prng import HALTON_PRNG
-from prng.sobol_prng import SOBOL_PRNG
+# Change file_path in MockingPrng and n_values_per_file and chunk_size
+from prng.lcg_prng import LcgPrng
+from prng.mt_prng import MtPrng
+from prng.xoroshio_prng import XoroshiroPrng
+from prng.urandom_prng import UrandomPrng
+from prng.halton_prng import HaltonPrng
+from prng.sobol_prng import SobolPrng
 
-prngs = [LCG_PRNG, MT_PRNG, XOROSHIRO_PRNG, URANDOM_PRNG, HALTON_PRNG, SOBOL_PRNG]
+prngs = [LcgPrng, MtPrng, XoroshiroPrng, UrandomPrng, HaltonPrng, SobolPrng]
 
-@pytest.mark.parametrize("nonMockingGensClass", [LCG_PRNG, MT_PRNG, XOROSHIRO_PRNG])
+@pytest.mark.parametrize("nonMockingGensClass", [LcgPrng, MtPrng, XoroshiroPrng])
 def test_nonMockingGensClass_prng_consistancy_when_generator_initialised_in_different_order(nonMockingGensClass):
     seed = 1000
     dim = 10
@@ -123,7 +123,7 @@ def test_nonMockingGensClass_prng_consistancy_when_generator_initialised_in_diff
                     last = new_last
 
 
-@pytest.mark.parametrize("sobol_or_halton_Class", [SOBOL_PRNG, HALTON_PRNG])
+@pytest.mark.parametrize("sobol_or_halton_Class", [SobolPrng, HaltonPrng])
 def test_SOBOL_HALTONClass_prng_consistancy_when_generator_initialised_in_different_order(sobol_or_halton_Class):
     seed = 1000
     dim = 10
@@ -152,7 +152,7 @@ def test_urandomClass_prng_consistancy_when_generator_initialised_in_different_o
     for perm in all_permutations:
         gen_is = [perm[i](seed, dim) for i in range(len(perm))]
         for gen_i in gen_is:
-            if isinstance(gen_i, URANDOM_PRNG):
+            if isinstance(gen_i, UrandomPrng):
                 if last is None:
                     last = gen_i._gen_uniform(dim)
                 else:
