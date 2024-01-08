@@ -2,3 +2,4 @@ numpy==1.26.2
 randomgen==1.26.0
 setuptools
 scipy
+pytest
