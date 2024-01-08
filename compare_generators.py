@@ -28,6 +28,10 @@ def uniform_to_std_normal(uniform_numbers):
     Maps [0,1) to aprox. [-5.5, 5.5] using inverse of error function.
     Limited range because numerical errors
     """
+    left_threshold = np.float32(1.4901163e-08)
+    uniform_numbers[uniform_numbers < left_threshold] = left_threshold
+    right_threshold = np.float32(0.9999999)
+    uniform_numbers[uniform_numbers > right_threshold] = right_threshold
     normal_numbers = np.sqrt(2) * erfinv(2 * uniform_numbers - 1)
     return normal_numbers
 
@@ -46,7 +50,7 @@ class SobolGenOnTheGo(Prng):
 
     def std_normal(self, dim: int, n: int = 1):
         return uniform_to_std_normal(
-            self._prng.random(1).astype(np.float32).reshape(-1)
+            self._prng.random(n).astype(np.float32).reshape(-1)
         )
 
 
@@ -93,7 +97,7 @@ def test_gen_i(gen_i, n, dim):
     )
 
 
-all_gens: List(Prng) = [
+all_gens: List[Prng] = [
     XoroshiroPrng,
     MtPrng,
     LcgPrng,
@@ -105,7 +109,7 @@ all_gens: List(Prng) = [
 ]
 
 # pylint: disable=W0102
-def compare_speed(n=1_000_000, dim=100, gens: List(Prng) = all_gens, seed=DEFAULT_SEED):
+def compare_speed(n=1_000_000, dim=100, gens: List[Prng] = all_gens, seed=DEFAULT_SEED):
     """Tests the speed of generating n times dim values"""
     for gen in gens:
         gen_i = gen(seed, dim)
@@ -167,61 +171,72 @@ if __name__ == "__main__":
         MtPrng,
         LcgPrng,
     ]
-    for dim in CORRECT_DIMS:
-        for gen in gens_used_in_experiments:
-            gen_i = gen(DEFAULT_SEED, dim)
-            visualize_gen_instance_values_distribution_per_coordinate(
-                gen_i, dim, NR_OF_VALUES_TO_PLOT
-            )
+    # for dim in CORRECT_DIMS:
+    #     for gen in gens_used_in_experiments:
+    #         gen_i = gen(DEFAULT_SEED, dim)
+    #         visualize_gen_instance_values_distribution_per_coordinate(
+    #             gen_i, dim, NR_OF_VALUES_TO_PLOT
+    #         )
 
-    TOTAL_NR_VALUES_TO_SAMPLE = 10_000_000
-    halton_no_files_dim_depended = HaltonGenOnTheGo(DEFAULT_SEED, DEFAULT_DIM)
-    visualize_gen_instance_values_distribution_per_coordinate(
-        halton_no_files_dim_depended, DEFAULT_DIM, TOTAL_NR_VALUES_TO_SAMPLE
-    )
+    # TOTAL_NR_VALUES_TO_SAMPLE = 10_000_000
+    # halton_no_files_dim_depended = HaltonGenOnTheGo(DEFAULT_SEED, DEFAULT_DIM)
+    # visualize_gen_instance_values_distribution_per_coordinate(
+    #     halton_no_files_dim_depended, DEFAULT_DIM, TOTAL_NR_VALUES_TO_SAMPLE
+    # )
 
-    compare_speed()
+    # compare_speed()
 
-    plot_x_numbers_from_file("prng/sobol_prng_files/1001_10", 2**30)
+    # plot_x_numbers_from_file("prng/sobol_prng_files/1001_10", 2**30)
 
     slow_gens = [SobolGenOnTheGo, HaltonGenOnTheGo]
     seeds = list(range(1000, 1051))
     MAX_FES_COEF = 10_000
-    for gen in slow_gens:
-        for dim in [10, 30, 50, 100]:
-            st_s = time.process_time()
-            for seed in seeds:
-                gen_i = gen(seed, dim)
-                st = time.process_time()
-                for i in range(MAX_FES_COEF * dim):
-                    point = gen_i.std_normal(dim)
-                print(
-                    f"{gen_i} seed: {seed} generated {MAX_FES_COEF*dim} points \
-                        of dim: {dim} in {time.process_time()-st} s"
-                )
-            print(
-                f"{gen_i} generated vals for all seeds for dim: {dim} \
-                    in {time.process_time()-st_s} s"
-            )
+    # for gen in slow_gens:
+    #     for dim in [10, 30, 50, 100]:
+    #         st_s = time.process_time()
+    #         for seed in seeds:
+    #             gen_i = gen(seed, dim)
+    #             st = time.process_time()
+    #             for i in range(MAX_FES_COEF * dim):
+    #                 point = gen_i.std_normal(dim)
+    #             print(
+    #                 f"{gen_i} seed: {seed} generated {MAX_FES_COEF*dim} points \
+    #                     of dim: {dim} in {time.process_time()-st} s"
+    #             )
+    #         print(
+    #             f"{gen_i} generated vals for all seeds for dim: {dim} \
+    #                 in {time.process_time()-st_s} s"
+    #         )
 
-    file_using_gens = [HaltonPrng, SobolPrng, UrandomPrng]
-    for gen in file_using_gens:
-        for dim in CORRECT_DIMS:
-            st = time.process_time()
-            for seed in seeds:
-                gen_i = gen(seed, dim)
-            print(
-                f"Time to generate all 51 files for gen: {gen.name} \
-                    for dim: {dim} generated in: {time.process_time()-st} s"
-            )
+    # file_using_gens = [HaltonPrng, SobolPrng, UrandomPrng]
+    # for gen in file_using_gens:
+    #     for dim in CORRECT_DIMS:
+    #         st = time.process_time()
+    #         for seed in seeds:
+    #             gen_i = gen(seed, dim)
+    #         print(
+    #             f"Time to generate all 51 files for gen: {gen.name} \
+    #                 for dim: {dim} generated in: {time.process_time()-st} s"
+    #         )
 
 
-    h = HaltonPrng(seed, dim)
-    NR_OF_POINTS = 1000_000
+    h = SobolPrng(DEFAULT_SEED, 100)
+    NR_OF_SAMPLING = 2**20 # kind of nr of generations
+    print("NR_of_Generations:", NR_OF_SAMPLING)
+    BATCH_SIZE = 1# 2**10 # NR of points each time it is sampled (kind of big population size)
+    print("Batch size", BATCH_SIZE)
     values = []
-    for i in range(NR_OF_POINTS):
-        values.append(h.std_normal(None))
+    for i in range(NR_OF_SAMPLING):
+        t0 = h.std_normal(100,)
+        assert t0.shape == (100, )
+        t = t0.reshape(-1)
+        assert t.shape == (100*BATCH_SIZE, )
+        values.append(t)
     values = np.concatenate(values, axis=0)
+    print(len(values), values.shape)
+
+    assert len(values) == NR_OF_SAMPLING*BATCH_SIZE*100
     filtered_values = values[np.logical_or(values > 5, values < -5)]
     print(h, filtered_values)
+    print(h, ":\tLenght:", len(filtered_values))
     plot_numbers(values, h)
