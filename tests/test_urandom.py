@@ -120,15 +120,15 @@ def test__dim_2xx20_default_chunk_size():
 
 
 
-if __name__ == "__main__":
-    import matplotlib.pyplot as plt
-    import numpy as np
+# if __name__ == "__main__":
+#     import matplotlib.pyplot as plt
+#     import numpy as np
 
-    with open('./prng/urandom_prng_files/1000', 'rb') as file:
-        data = np.fromfile(file, dtype=np.float32)
-        plt.hist(data, bins=100, alpha=0.7)  # Adjust the number of bins as needed
-        plt.title('Histogram of Data')
-        plt.xlabel('Values')
-        plt.ylabel('Frequency')
-        plt.grid(True)
-        plt.show()
+#     with open('./prng/urandom_prng_files/1000', 'rb') as file:
+#         data = np.fromfile(file, dtype=np.float32)
+#         plt.hist(data, bins=100, alpha=0.7)  # Adjust the number of bins as needed
+#         plt.title('Histogram of Data')
+#         plt.xlabel('Values')
+#         plt.ylabel('Frequency')
+#         plt.grid(True)
+#         plt.show()
