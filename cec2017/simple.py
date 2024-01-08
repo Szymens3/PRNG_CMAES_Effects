@@ -44,7 +44,7 @@ def f2(x, rotation=None, shift=None):
     """
     if 'warned' not in f2.__dict__:
         f2.warned = True
-        print('WARNING: f2 has been deprecated from the CEC 2017 benchmark suite')
+        # print('WARNING: f2 has been deprecated from the CEC 2017 benchmark suite')
 
     x = np.array(x)
     nx = x.shape[1]
