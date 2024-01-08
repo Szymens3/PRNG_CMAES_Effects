@@ -18,9 +18,10 @@ class UrandomPrng(MockingPrng):
         return f"urandom_{super().__str__()}"
 
     def _gen_uniform(self, dim: int, n:int =1):
-        random_bytes = os.urandom(dim * 4)
+        dim = 100 # ATTENTION: VERY UGLY
+        random_bytes = os.urandom(dim * n * 4)
         random_array = np.frombuffer(random_bytes, dtype=np.uint32)
-        random_array = random_array.reshape((dim,))
+        random_array = random_array.reshape((dim*n,))
         return random_array / (2**32 - 1)
 
     def _init_file_path(self):

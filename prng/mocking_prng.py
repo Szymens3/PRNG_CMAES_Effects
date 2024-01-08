@@ -115,7 +115,7 @@ class MockingPrng(Prng):
         raise MockingPrng.ReadingChunkException("File is probably empty")
 
     def _write_chunk_to_file(self, file, chunk_size):
-        normal_numbers = self._gen_std_normal(None, chunk_size)
+        normal_numbers = self._gen_std_normal(self._dim ,chunk_size)
         normal_numbers.astype(np.float32).tofile(file)
 
     def _write_chunks_to_file(self, file, target_nr_of_values_to_generate):
