@@ -1,4 +1,7 @@
 # CMA-ES Prng Impact
+### Warning:
+These experiments are resource-intensive. 
+They spawn more than 90 processes - make sure your machine can handle that.
 ## HOW TO RUN EXPERIMENTS?
 ```bash
 > git clone https://github.com/Szymens3/PRNG_CMAES_Effects
