@@ -21,6 +21,11 @@ from prng.halton_prng import HaltonPrng
 from prng.sobol_prng import SobolPrng
 from cmaes.custom_cma import CustomCMA
 
+from file_validator_with_logging import (
+    check_file_sizes_for_all_gens,
+    check_generators_file_paths_exist,
+)
+
 ALGORITHM_NAME = "cmaes"
 
 
@@ -129,6 +134,7 @@ def _setup_logger_per_prng_per_seed(prng, seed, log_dir):
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
 
+    # pylint: disable=W0613:unused-argument
     def _handle_numpy_warnings(message, category, filename, lineno, file=None, line=None):
         logger.warning(f"NumPy warning: {category.__name__}: {message}")
 
@@ -141,7 +147,7 @@ def _setup_main_logger(log_dir, main_log_name):
     # pylint: disable=C0103
     log_path = f"{log_dir}/{main_log_name}"
 
-    logger = logging.getLogger(f"logger_main")
+    logger = logging.getLogger("logger_main")
     logger.setLevel(logging.DEBUG)
     file_handler = logging.FileHandler(log_path, mode="w")
     file_handler.setLevel(logging.DEBUG)
@@ -149,6 +155,7 @@ def _setup_main_logger(log_dir, main_log_name):
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
 
+    # pylint: disable=W0613:unused-argument
     def _handle_numpy_warnings(message, category, filename, lineno, file=None, line=None):
         logger.warning(f"NumPy warning: {category.__name__}: {message}")
 
@@ -169,6 +176,7 @@ def _setup_logger_per_prgn_per_function(prng, i, log_dir):
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
 
+    # pylint: disable=W0613:unused-argument
     def _handle_numpy_warnings(message, category, filename, lineno, file=None, line=None):
         logger.warning(f"NumPy warning: {category.__name__}: {message}")
 
@@ -244,7 +252,7 @@ def _split_file_generation_per_seed(prng, seeds, dims, log_dir):
         ps[i].join()
 
 
-def _pregenerate_files(prngs, seeds, dims, log_dir):
+def _split_file_generation_per_prng(prngs, seeds, dims, log_dir):
     ps = []
     for prng in prngs:
         file_generation_subdirectory = f"{log_dir}/file_generation/{prng.name}"
@@ -260,118 +268,6 @@ def _pregenerate_files(prngs, seeds, dims, log_dir):
         ps[i].join()
 
 
-def _get_file_paths_for_sobol_or_halton(seeds, dims, sobol_or_halton, file_dir="prng"):
-    paths = []
-    for seed in seeds:
-        for dim in dims:
-            paths.append(f"{file_dir}/{sobol_or_halton.name}_prng_files/{seed}_{dim}")
-    return paths
-
-
-def _get_file_paths_for_urandom(seeds, urandom, file_dir="prng"):
-    paths = []
-    for seed in seeds:
-        paths.append(f"{file_dir}/{urandom.name}_prng_files/{seed}")
-    return paths
-
-
-def _check_and_log_file_path_exists(file_path, logger: logging.Logger):
-    if os.path.exists(file_path):
-        logger.info(f"{file_path} exists")
-        return True
-    else:
-        logger.critical(f"{file_path} does not exist!")
-        return False
-
-
-def _check_file_paths_exist(file_paths, logger):
-    all_good = True
-    for file_path in file_paths:
-        if not _check_and_log_file_path_exists(file_path, logger):
-            all_good = False
-    return all_good
-
-
-def _check_generators_file_paths_exist(prngs, seeds, dims, logger):
-    all_good = True
-    prng_good = False
-    for prng in prngs:
-        if prng.name == "halton" or prng.name == "sobol":
-            sobol_or_halton_expected_file_paths = _get_file_paths_for_sobol_or_halton(
-                seeds, dims, prng
-            )
-            prng_good = _check_file_paths_exist(sobol_or_halton_expected_file_paths, logger)
-        elif prng.name == "urandom":
-            urandom_expected_file_paths = _get_file_paths_for_urandom(seeds, prng)
-            prng_good = _check_file_paths_exist(urandom_expected_file_paths, logger)
-        else:
-            logger.warning(f"Trying to check for file existance for generator: {prng}")
-        if prng_good:
-            logger.info(f"All files for {prng} exists")
-        else:
-            all_good = False
-            logger.critical(f"Not all files for {prng} exist")
-    return all_good
-
-
-def _check_files_size_per_dim(file_paths, dim, logger):
-    all_good = True
-    CHUNK_SIZE = 2**20
-    FLOAT_32_BYTE_SIZE = 4
-
-    correct_file_size = CHUNK_SIZE * dim * FLOAT_32_BYTE_SIZE
-    for file_path in file_paths:
-        real_file_size = os.path.getsize(file_path)
-        if real_file_size == correct_file_size:
-            logger.info(f"File: {file_path} has correct size")
-        else:
-            logger.critical(
-                f"File {file_path} does not have expected size: Real size: {real_file_size}, expected size: {correct_file_size}"
-            )
-            all_good = False
-    return all_good
-
-
-def _group_file_paths_based_on_dim(file_paths, expected_dims=[10, 30, 50, 100]):
-    grouped_paths = {dim: [] for dim in expected_dims}
-
-    for file_path in file_paths:
-        file_name = os.path.basename(file_path)
-        file_name_parts = file_name.split("_")
-
-        if len(file_name_parts) == 2:
-            second_part = file_name_parts[1]
-            grouped_paths[second_part].append(file_path)
-        else:
-            Exception
-    return grouped_paths
-
-
-def _check_file_sizes_for_all_gens(prngs, logger, seeds, dims):
-    all_expected_file_paths = []
-    for prng in prngs:
-        if prng.name == "halton" or prng.name == "sobol":
-            sobol_or_halton_expected_file_paths = _get_file_paths_for_sobol_or_halton(
-                seeds, dims, prng
-            )
-            all_expected_file_paths.extend(sobol_or_halton_expected_file_paths)
-        elif prng.name == "urandom":
-            urandom_expected_file_paths = _get_file_paths_for_urandom(seeds, prng)
-            all_expected_file_paths.extend(urandom_expected_file_paths)
-        else:
-            logger.warning(f"Trying to get expected file paths for generator: {prng}")
-
-    groupped_on_dim_file_paths = _group_file_paths_based_on_dim(all_expected_file_paths)
-    are_dims_good = [
-        _check_files_size_per_dim(grouped_paths, dim, logger)
-        for dim, grouped_paths in groupped_on_dim_file_paths.items()
-    ]
-    for is_dim_good in are_dims_good:
-        if not is_dim_good:
-            return False
-    return True
-
-
 if __name__ == "__main__":
     LOG_DIR = "logs"
     os.makedirs(LOG_DIR, exist_ok=True)
@@ -381,9 +277,9 @@ if __name__ == "__main__":
     main_logger.info("Python Script Started")
     parser = argparse.ArgumentParser(description="")
     parser.add_argument(
-        "--second_half",
+        "--file_depended",
         action="store_true",
-        help="Run SOBOL HALTON and URANDOM instead of MT LCG and XOROSHIRO",
+        help="Run SOBOL HALTON and URANDOM - file depended prngs, instead of MT LCG and XOROSHIRO",
     )
     args = parser.parse_args()
 
@@ -393,11 +289,12 @@ if __name__ == "__main__":
     DIMS = [10, 30, 50, 100]
     SEEDS = list(range(1000, 1030))
 
-    if args.second_half:
+    if args.file_depended:
         curr_prngs = prngs_second_half
         main_logger.info("Starting file pre-generation")
-        _pregenerate_files(curr_prngs, SEEDS, DIMS, LOG_DIR)
-        all_expected_files_exist = _check_generators_file_paths_exist(
+        _split_file_generation_per_prng(curr_prngs, SEEDS, DIMS, LOG_DIR)
+        # pylint: disable=C0103:invalid-name
+        all_expected_files_exist = check_generators_file_paths_exist(
             curr_prngs, SEEDS, DIMS, main_logger
         )
         if not all_expected_files_exist:
@@ -406,7 +303,7 @@ if __name__ == "__main__":
             print("Please contact Projekt Specjalny Team ASAP")
             sys.exit()
 
-        all_files_have_correct_sizes = _check_file_sizes_for_all_gens(
+        all_files_have_correct_sizes = check_file_sizes_for_all_gens(
             curr_prngs, main_logger, SEEDS, DIMS
         )
         if not all_files_have_correct_sizes:
