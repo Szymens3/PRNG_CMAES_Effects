@@ -149,7 +149,7 @@ def _setup_main_logger(log_dir, main_log_name):
 
     logger = logging.getLogger("logger_main")
     logger.setLevel(logging.DEBUG)
-    file_handler = logging.FileHandler(log_path, mode="w")
+    file_handler = logging.FileHandler(log_path, mode="a")
     file_handler.setLevel(logging.DEBUG)
     formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
     file_handler.setFormatter(formatter)
